@@ -36,15 +36,20 @@ NAN_METHOD(node_light_verify) {
     if(!Buffer::HasInstance(target4))
         return THROW_ERROR_EXCEPTION("Argument should be a buffer object.");
 
-    char *header_hash = Buffer::Data(target);
-    char *mix_hash = Buffer::Data(target2);
-    char *str_nonce = Buffer::Data(target3);
-    char *boundary = Buffer::Data(target4);
-    char *final_hash = (char*) malloc(sizeof(char) * 32);
+    std::string header_hash;
+    std::string mix_hash;
+    std::string str_nonce;
+    std::string boundary;
+    header_hash = (std::string) Buffer::Data(target);
+    mix_hash = (std::string)  Buffer::Data(target2);
+    str_nonce = (std::string)  Buffer::Data(target3);
+    boundary = (std::string)  Buffer::Data(target4);
+    char *cstr = new char[64 + 1];
 
-    progpow::light_verify(header_hash, mix_hash, str_nonce, boundary, final_hash);
+    progpow::light_verify(header_hash.c_str(), mix_hash.c_str(), str_nonce.c_str(), boundary.c_str(), cstr);
+    info.GetReturnValue().Set(Nan::New(std::string(cstr, 64)).ToLocalChecked());
 
-    info.GetReturnValue().Set(Nan::NewBuffer(final_hash, 32).ToLocalChecked());
+    delete[] cstr;
 }
 
 NAN_MODULE_INIT(init) {
