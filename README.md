@@ -14,6 +14,8 @@ Setup your nodejs environment first (I recommend nvm in your home directory) and
 
 $ npm install -g node-gyp
 
+$ npm install -g graceful-fs
+
 After that, you can build this module by:
 
 $ git clone https://github.com/traysi/kawpow-light-verifier
