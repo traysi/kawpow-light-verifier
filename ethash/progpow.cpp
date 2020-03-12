@@ -13,6 +13,8 @@
 #include <helpers.hpp>
 
 #include <array>
+#include <iostream>
+#include <climits>
 
 namespace progpow
 {
@@ -333,19 +335,36 @@ bool verify(const epoch_context& context, int block_number, const hash256& heade
 
 bool light_verify(const char* str_header_hash, const char* str_mix_hash, const char* str_nonce, const char* str_boundary, char* str_final) noexcept {
 
-    hash256 header_hash = to_hash256(str_header_hash);
-    hash256 mix_hash = to_hash256(str_mix_hash);
-    hash256 boundary = to_hash256(str_boundary);
+    hash256 header_hash = to_hash256(std::string(str_header_hash, 64));
+    hash256 mix_hash = to_hash256(std::string(str_mix_hash, 64));
+    hash256 boundary = to_hash256(std::string(str_boundary, 64));
+    std::string str(str_nonce, 16);
 
-    uint64_t nonce = std::stoull(str_nonce, nullptr, 16);
+    uint64_t nNonce;
+    errno = 0;
+    char *endp = NULL;
+    errno = 0; // strtoull will not set errno if valid
+    unsigned long long int n = strtoull(str.c_str(), &endp, 16);
+    nNonce = (uint64_t)n;
+    if (nNonce == 0 && endp == str.c_str()) {
+        std::cout << "Nonce wasn't a string" << std::endl;
+        return false;
+    } else if (nNonce == ULLONG_MAX && errno) {
+        std::cout << "Hex value was out of range" << std::endl;
+        return false;
+    } else if (*endp) {
+        std::cout << "Invalid hex string" << std::endl;
+        return false;
+    }
 
-    const uint64_t seed = keccak_progpow_64(header_hash, nonce);
+    const uint64_t seed = keccak_progpow_64(header_hash, nNonce);
     const hash256 final_hash = keccak_progpow_256(header_hash, seed, mix_hash);
-
-    memcpy(str_final,&to_hex(final_hash)[0],64);
 
     if (!is_less_or_equal(final_hash, boundary))
         return false;
+
+    // Copy the final_hash to the result pointer
+    strcpy(str_final,to_hex(final_hash).c_str());
 
     return true;
 }
